@@ -1,4 +1,5 @@
-# Zoho D7 Custom SMS Deluge
+# Zoho D7 Custom SMS Deluge 
+# D7 Networks provides powerful messaging APIs for SMS
 
 This function sends SMS using D7 Networks directly from Zoho CRM Leads via Deluge.  
 It:
