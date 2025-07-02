@@ -1,0 +1,62 @@
+// Zoho D7 Custom SMS Function
+messageToBeSent = "TEST!!!! Add the message content here";
+resp = zoho.crm.getRecordById("Leads", ID);
+Mobile = resp.get("Mobile");
+
+// Org Variables
+d7smsAccToken = zoho.crm.getOrgVariable("d7sms__D7API_Token");
+d7smsfrom = zoho.crm.getOrgVariable("d7sms__from");
+mo_url = zoho.crm.getOrgVariable("d7sms__apifunctionurl");
+report_url = mo_url.replaceAll("d7sms__mosms","d7sms__recdlr");
+
+// Clean mobile number
+ph_num = Mobile.replaceAll("[^0-9]","");
+
+if(messageToBeSent.len() > 0)
+{
+    if(ph_num.length() > 6)
+    {
+        numlist = ph_num.toList(",");
+        data = {
+            "messages": {{
+                "originator": d7smsfrom,
+                "recipients": numlist,
+                "content": messageToBeSent,
+                "report_url": report_url
+            }}
+        };
+
+        response = invokeurl
+        [
+            url :"https://api.d7networks.com/messages/v1/send"
+            type :POST
+            parameters:data.toString()
+            headers: {
+                "Content-Type":"application/json",
+                "Authorization":"Bearer " + d7smsAccToken
+            }
+        ];
+
+        status = response.getJSON("status");
+        request_id = response.getJSON("request_id");
+
+        updateMap = {
+            "Name": "Lead SMS Generated from Custom function",
+            "d7sms__Message": messageToBeSent,
+            "d7sms__Source": d7smsfrom,
+            "d7sms__Destination": ph_num,
+            "d7sms__Direction": "Outgoing",
+            "d7sms__Status": status,
+            "d7sms__Lead": ID,
+            "d7sms__Request_ID": request_id
+        };
+
+        m = Map();
+        l = List();
+        l.add(updateMap);
+        m.put("module","d7sms__D7SMS");
+        m.put("data",l);
+
+        resp = zoho.crm.invokeConnector("crm.create", m);
+    }
+}
